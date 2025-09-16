@@ -33,6 +33,29 @@ int helper(const char *letter)
   return 100;
 }
 
+int helper_color(int id)
+{
+  switch (id)
+  {
+  case 0:
+    return RED;
+  case 1:
+    return BLUE;
+  case 2:
+    return BROWN;
+  case 3:
+    return MAGENTA;
+  case 4:
+    return WHITE;
+  case 5:
+    return CYAN;
+  case 6:
+    return GREEN;
+  default:
+    return WHITE;
+  }
+}
+
 void draw_grid(SDL_Surface *surface)
 {
   SDL_Rect h = {0, 0, WIDTH, LINE_WIDTH};
@@ -114,26 +137,28 @@ bool can_move_down(Piece *p, int cells[COLS][ROWS])
   }
 }
 
-void draw_cell(SDL_Surface *surface, int x, int y, int cells[COLS][ROWS])
+void draw_cell(SDL_Surface *surface, int x, int y, int cells[COLS][ROWS], Uint32 color)
 {
   SDL_Rect cell = {x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE};
-  SDL_FillSurfaceRect(surface, &cell, 0xffffff);
+  SDL_FillSurfaceRect(surface, &cell, color);
 }
 
-void fill_cell(int x, int y, int cells[COLS][ROWS])
+void fill_cell(int x, int y, int cells[COLS][ROWS], Uint32 color)
 {
-  cells[x][y] = 1;
+  cells[x][y] = color;
 }
 
 Piece create_piece(const char *letter)
 {
-  Piece p = {COLS / 2, 0, helper(letter), 0};
+  int id = helper(letter);
+  Piece p = {COLS / 2, 0, id, 0, helper_color(id)};
   return p;
 }
 
 Piece get_random_piece()
 {
-  Piece p = {COLS / 2, 0, SDL_rand(6), 0};
+  int id = SDL_rand(7);
+  Piece p = {COLS / 2, 0, id, 0, helper_color(id)};
   return p;
 }
 
@@ -141,6 +166,7 @@ void place_piece(SDL_Surface *surface, Piece *p, int cells[COLS][ROWS])
 {
   int x = p->x;
   int y = p->y;
+  int color = p->color;
   switch (p->shape)
   {
   case 0:
@@ -201,6 +227,7 @@ void draw_piece(SDL_Surface *surface, Piece *p, int cells[COLS][ROWS])
 {
   int x = p->x;
   int y = p->y;
+  int color = p->color;
   switch (p->shape)
   {
   case 0:
@@ -267,8 +294,8 @@ void tick(SDL_Surface *surface, Piece *current, int cells[COLS][ROWS])
   {
     PLACE_PIECE(current);
     check_lines(cells);
-    // *current = get_random_piece();
-    *current = create_piece("I");
+    *current = get_random_piece();
+    // *current = create_piece("I");
   }
 }
 
@@ -282,7 +309,7 @@ void draw_cells(SDL_Surface *surface, int cells[COLS][ROWS])
       {
         // drawing a cell
         SDL_Rect rect = {x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE};
-        SDL_FillSurfaceRect(surface, &rect, 0xffffff);
+        SDL_FillSurfaceRect(surface, &rect, cells[x][y]);
       }
     }
   }
@@ -344,7 +371,8 @@ int main()
   int game = 1;
   int fps = 60;
   int cells[COLS][ROWS] = {0};
-  Piece current = create_piece("I");
+  // Piece current = create_piece("I");
+  Piece current = get_random_piece();
 
   Uint32 last_tick = SDL_GetTicks();
   Uint32 delay = 150;
