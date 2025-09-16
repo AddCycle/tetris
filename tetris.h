@@ -8,7 +8,7 @@
 
 #define WIDTH 600
 #define HEIGHT 900
-#define CELL_SIZE 20
+#define CELL_SIZE 30
 
 #define ROWS (HEIGHT / CELL_SIZE)
 #define COLS (WIDTH / CELL_SIZE)
@@ -24,3 +24,20 @@ typedef struct
   int shape;    // id: 0-6 IOTLJZS
   int rotation; // 0-3
 } Piece;
+
+int helper(const char *letter);
+
+void draw_grid(SDL_Surface *surface);
+
+bool can_move_down(Piece *p, int cells[COLS][ROWS]);
+void draw_cell(SDL_Surface *surface, int x, int y, int cells[COLS][ROWS]);
+void fill_cell(int x, int y, int cells[COLS][ROWS]);
+Piece create_piece(const char *letter);
+Piece get_random_piece();
+void place_piece(SDL_Surface *surface, Piece *p, int cells[COLS][ROWS]);
+void draw_piece(SDL_Surface *surface, Piece *p, int cells[COLS][ROWS]);
+void tick(SDL_Surface *surface, Piece *current, int cells[COLS][ROWS]);
+void draw_cells(SDL_Surface *surface, int cells[COLS][ROWS]);
+void reset_row(int row, int cells[COLS][ROWS]);
+bool check_line(int row[COLS]);
+void check_lines(int cells[COLS][ROWS]);

@@ -125,9 +125,9 @@ void fill_cell(int x, int y, int cells[COLS][ROWS])
   cells[x][y] = 1;
 }
 
-Piece create_piece(const char *letter, int x, int y)
+Piece create_piece(const char *letter)
 {
-  Piece p = {x, y, helper(letter), 0};
+  Piece p = {COLS / 2, 0, helper(letter), 0};
   return p;
 }
 
@@ -266,7 +266,9 @@ void tick(SDL_Surface *surface, Piece *current, int cells[COLS][ROWS])
   else
   {
     PLACE_PIECE(current);
-    *current = get_random_piece();
+    check_lines(cells);
+    // *current = get_random_piece();
+    *current = create_piece("I");
   }
 }
 
@@ -282,6 +284,46 @@ void draw_cells(SDL_Surface *surface, int cells[COLS][ROWS])
         SDL_Rect rect = {x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE};
         SDL_FillSurfaceRect(surface, &rect, 0xffffff);
       }
+    }
+  }
+}
+
+void reset_row(int row, int cells[COLS][ROWS])
+{
+  for (int y = row; y > 0; y--)
+  {
+    for (int x = 0; x < COLS; x++)
+    {
+      cells[x][y] = cells[x][y - 1]; // copy row above down (all rows)
+    }
+  }
+  // clear finally the top row
+  for (int x = 0; x < COLS; x++)
+    cells[x][0] = 0;
+}
+
+bool check_line(int row[COLS])
+{
+  for (int col = 0; col < COLS; col++)
+  {
+    if (!row[col])
+      return false;
+  }
+  return true;
+}
+
+void check_lines(int cells[COLS][ROWS])
+{
+  for (int i = 0; i < ROWS; i++)
+  {
+    int row[COLS] = {0};
+    for (int j = 0; j < COLS; j++)
+    {
+      row[j] = cells[j][i];
+    }
+    if (check_line(row))
+    {
+      reset_row(i, cells);
     }
   }
 }
@@ -302,10 +344,10 @@ int main()
   int game = 1;
   int fps = 60;
   int cells[COLS][ROWS] = {0};
-  Piece current = get_random_piece();
+  Piece current = create_piece("I");
 
   Uint32 last_tick = SDL_GetTicks();
-  Uint32 delay = 50;
+  Uint32 delay = 150;
 
   while (game)
   {
@@ -341,6 +383,10 @@ int main()
         case SDLK_LEFT:
           if (current.x - 1 >= 0)
             current.x--;
+          break;
+        case SDLK_DOWN:
+          if (can_move_down(&current, cells))
+            current.y++;
           break;
         }
       }
