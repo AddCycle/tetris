@@ -1,5 +1,28 @@
 #include "tetris.h"
 
+const char *inv_helper(int id)
+{
+  switch (id)
+  {
+  case 0:
+    return "I";
+  case 1:
+    return "O";
+  case 2:
+    return "T";
+  case 3:
+    return "L";
+  case 4:
+    return "J";
+  case 5:
+    return "Z";
+  case 6:
+    return "S";
+  default:
+    return "I";
+  }
+}
+
 int helper(const char *letter)
 {
   if (!strcmp(letter, "I"))
@@ -69,72 +92,44 @@ void draw_grid(SDL_Surface *surface)
 
 bool can_move_down(Piece *p, int cells[COLS][ROWS])
 {
-  switch (p->shape)
+  for (int i = 0; i < 4; i++)
   {
-  case 0: // I
-    printf("spawned I\n");
-    for (int i = 0; i < 4; i++)
-    {
-      int nx = p->x + i;
-      int ny = p->y + 1;
-      if (ny >= ROWS || cells[nx][ny])
-        return false;
-    }
-    return true;
-  case 1: // O
-    int ny = p->y + 2;
-    printf("spawned O\n");
-    if (ny >= ROWS || cells[p->x][ny] || cells[p->x + 1][ny])
-      return false;
-    return true;
-  case 2: // T
-    printf("spawned T\n");
-    if (p->y + 1 >= ROWS || cells[p->x][p->y + 1])
-      return false;
-    if (p->y + 2 >= ROWS || cells[p->x + 1][p->y + 2])
-      return false;
-    if (cells[p->x + 2][p->y + 1])
-      return false;
-    return true;
-  case 3: // L
-    printf("spawned L\n");
-    if (p->y + 2 >= ROWS || cells[p->x][p->y + 2])
-      return false;
-    if (p->y + 1 >= ROWS || cells[p->x + 1][p->y + 1])
-      return false;
-    if (cells[p->x + 2][p->y + 1])
-      return false;
-    return true;
-  case 4:
-    printf("spawned J\n");
-    if (p->y + 1 >= ROWS || cells[p->x][p->y + 1])
-      return false;
-    if (cells[p->x + 1][p->y + 1])
-      return false;
-    if (p->y + 2 >= ROWS || cells[p->x + 2][p->y + 2])
-      return false;
-    return true;
-  case 5:
-    printf("spawned Z\n");
-    if (p->y + 1 >= ROWS || cells[p->x][p->y + 1])
-      return false;
-    if (cells[p->x + 1][p->y + 2])
-      return false;
-    if (p->y + 2 >= ROWS || cells[p->x + 2][p->y + 1])
-      return false;
-    return true;
-  case 6:
-    printf("spawned S\n");
-    if (p->y + 2 >= ROWS || cells[p->x][p->y + 2])
-      return false;
-    if (cells[p->x + 1][p->y + 2])
-      return false;
-    if (p->y + 1 >= ROWS || cells[p->x + 2][p->y + 1])
-      return false;
-    return true;
-  default:
-    return false;
+    int nx = p->x + p->blocks[i].x;
+    int ny = p->y + p->blocks[i].y + 1; // move down by 1
+    if (ny >= ROWS)
+      return false; // hit bottom
+    if (cells[nx][ny])
+      return false; // hit existing block
   }
+  return true;
+}
+
+bool can_move_left(Piece *p, int cells[COLS][ROWS])
+{
+  for (int i = 0; i < 4; i++)
+  {
+    int nx = p->x + p->blocks[i].x - 1; // move left
+    int ny = p->y + p->blocks[i].y;
+    if (nx < 0)
+      return false; // hit left wall
+    if (cells[nx][ny])
+      return false; // hit existing block
+  }
+  return true;
+}
+
+bool can_move_right(Piece *p, int cells[COLS][ROWS])
+{
+  for (int i = 0; i < 4; i++)
+  {
+    int nx = p->x + p->blocks[i].x + 1; // move right
+    int ny = p->y + p->blocks[i].y;
+    if (nx >= COLS)
+      return false; // hit right wall
+    if (cells[nx][ny])
+      return false; // hit existing block
+  }
+  return true;
 }
 
 void draw_cell(SDL_Surface *surface, int x, int y, int cells[COLS][ROWS], Uint32 color)
@@ -148,139 +143,97 @@ void fill_cell(int x, int y, int cells[COLS][ROWS], Uint32 color)
   cells[x][y] = color;
 }
 
+Piece create_I_piece()
+{
+  Piece p = {COLS / 2, 0, 0, 0, RED, {{-2, 0}, {-1, 0}, {0, 0}, {1, 0}}};
+  return p;
+}
+
+Piece create_O_piece()
+{
+  Piece p = {COLS / 2, 0, 1, 0, BLUE, {{0, 0}, {1, 0}, {0, 1}, {1, 1}}};
+  return p;
+}
+
+Piece create_T_piece()
+{
+  Piece p = {COLS / 2, 0, 2, 0, BROWN, {{-1, 0}, {0, 0}, {1, 0}, {0, 1}}};
+  return p;
+}
+
+Piece create_L_piece()
+{
+  Piece p = {COLS / 2, 0, 3, 0, MAGENTA, {{-1, 0}, {0, 0}, {1, 0}, {-1, 1}}};
+  return p;
+}
+
+Piece create_J_piece()
+{
+  Piece p = {COLS / 2, 0, 4, 0, WHITE, {{-1, 0}, {0, 0}, {1, 0}, {1, 1}}};
+  return p;
+}
+
+Piece create_Z_piece()
+{
+  Piece p = {COLS / 2, 0, 5, 0, CYAN, {{-1, 0}, {0, 0}, {0, 1}, {1, 1}}};
+  return p;
+}
+
+Piece create_S_piece()
+{
+  Piece p = {COLS / 2, 0, 6, 0, GREEN, {{0, 0}, {1, 0}, {-1, 1}, {0, 1}}};
+  return p;
+}
+
 Piece create_piece(const char *letter)
 {
   int id = helper(letter);
-  Piece p = {COLS / 2, 0, id, 0, helper_color(id)};
-  return p;
+  switch (id)
+  {
+  case 0: // I
+    return create_I_piece();
+  case 1: // O
+    return create_O_piece();
+  case 2:
+    return create_T_piece();
+  case 3:
+    return create_L_piece();
+  case 4:
+    return create_J_piece();
+  case 5:
+    return create_Z_piece();
+  case 6:
+    return create_S_piece();
+  default:
+    return create_I_piece();
+  }
 }
 
 Piece get_random_piece()
 {
   int id = SDL_rand(7);
-  Piece p = {COLS / 2, 0, id, 0, helper_color(id)};
-  return p;
+  return create_piece(inv_helper(id));
 }
 
 void place_piece(SDL_Surface *surface, Piece *p, int cells[COLS][ROWS])
 {
-  int x = p->x;
-  int y = p->y;
   int color = p->color;
-  switch (p->shape)
+  for (int i = 0; i < 4; i++)
   {
-  case 0:
-    for (int i = 0; i < 4; i++)
-    {
-      FILL_CELL(x + i, y);
-    }
-    printf("spawned I\n");
-    break;
-  case 1:
+    int x = p->x + p->blocks[i].x;
+    int y = p->y + p->blocks[i].y;
     FILL_CELL(x, y);
-    FILL_CELL(x, y + 1);
-    FILL_CELL(x + 1, y);
-    FILL_CELL(x + 1, y + 1);
-    printf("spawned O\n");
-    break;
-  case 2:
-    FILL_CELL(x, y);
-    FILL_CELL(x + 1, y);
-    FILL_CELL(x + 2, y);
-    FILL_CELL(x + 1, y + 1);
-    printf("spawned T\n");
-    break;
-  case 3:
-    FILL_CELL(x, y);
-    FILL_CELL(x + 1, y);
-    FILL_CELL(x + 2, y);
-    FILL_CELL(x, y + 1);
-    printf("spawned L\n");
-    break;
-  case 4:
-    FILL_CELL(x, y);
-    FILL_CELL(x + 1, y);
-    FILL_CELL(x + 2, y);
-    FILL_CELL(x + 2, y + 1);
-    printf("spawned J\n");
-    break;
-  case 5:
-    FILL_CELL(x, y);
-    FILL_CELL(x + 1, y);
-    FILL_CELL(x + 1, y + 1);
-    FILL_CELL(x + 2, y + 1);
-    printf("spawned Z\n");
-    break;
-  case 6:
-    FILL_CELL(x + 1, y);
-    FILL_CELL(x + 2, y);
-    FILL_CELL(x, y + 1);
-    FILL_CELL(x + 1, y + 1);
-    printf("spawned S\n");
-    break;
-  default:
-    break;
   }
 }
 
 void draw_piece(SDL_Surface *surface, Piece *p, int cells[COLS][ROWS])
 {
-  int x = p->x;
-  int y = p->y;
   int color = p->color;
-  switch (p->shape)
+  for (int i = 0; i < 4; i++)
   {
-  case 0:
-    for (int i = 0; i < 4; i++)
-    {
-      DRAW_CELL(x + i, y);
-    }
-    // printf("drawing I\n");
-    break;
-  case 1:
+    int x = p->x + p->blocks[i].x;
+    int y = p->y + p->blocks[i].y;
     DRAW_CELL(x, y);
-    DRAW_CELL(x, y + 1);
-    DRAW_CELL(x + 1, y);
-    DRAW_CELL(x + 1, y + 1);
-    // printf("drawing O\n");
-    break;
-  case 2:
-    DRAW_CELL(x, y);
-    DRAW_CELL(x + 1, y);
-    DRAW_CELL(x + 2, y);
-    DRAW_CELL(x + 1, y + 1);
-    // printf("drawing T\n");
-    break;
-  case 3:
-    DRAW_CELL(x, y);
-    DRAW_CELL(x + 1, y);
-    DRAW_CELL(x + 2, y);
-    DRAW_CELL(x, y + 1);
-    // printf("drawing L\n");
-    break;
-  case 4:
-    DRAW_CELL(x, y);
-    DRAW_CELL(x + 1, y);
-    DRAW_CELL(x + 2, y);
-    DRAW_CELL(x + 2, y + 1);
-    // printf("drawing J\n");
-    break;
-  case 5:
-    DRAW_CELL(x, y);
-    DRAW_CELL(x + 1, y);
-    DRAW_CELL(x + 1, y + 1);
-    DRAW_CELL(x + 2, y + 1);
-    // printf("drawing Z\n");
-    break;
-  case 6:
-    DRAW_CELL(x + 1, y);
-    DRAW_CELL(x + 2, y);
-    DRAW_CELL(x, y + 1);
-    DRAW_CELL(x + 1, y + 1);
-    // printf("drawing S\n");
-    break;
-  default:
-    break;
   }
 }
 
@@ -355,6 +308,39 @@ void check_lines(int cells[COLS][ROWS])
   }
 }
 
+void rotate_piece(Piece *p, int cells[COLS][ROWS])
+{
+  if (p->shape == 1)
+    return;
+
+  Block new_blocks[4];
+
+  for (int i = 0; i < 4; i++)
+  {
+    int x = p->blocks[i].x;
+    int y = p->blocks[i].y;
+
+    // clockwise rotation
+    new_blocks[i].x = y;
+    new_blocks[i].y = -x;
+  }
+
+  // Check if new position is valid
+  for (int i = 0; i < 4; i++)
+  {
+    int nx = p->x + new_blocks[i].x;
+    int ny = p->y + new_blocks[i].y;
+    if (nx < 0 || nx >= COLS || ny < 0 || ny >= ROWS || cells[nx][ny])
+    {
+      return; // invalid rotation
+    }
+  }
+
+  // Apply rotation
+  for (int i = 0; i < 4; i++)
+    p->blocks[i] = new_blocks[i];
+}
+
 int main()
 {
   SDL_Event event;
@@ -370,6 +356,7 @@ int main()
 
   int game = 1;
   int fps = 60;
+  bool is_pressed_space = false;
   int cells[COLS][ROWS] = {0};
   // Piece current = create_piece("I");
   Piece current = get_random_piece();
@@ -398,27 +385,40 @@ int main()
           game = 0;
           break;
         case SDLK_RIGHT:
-          int size = current.shape;
-          if (current.shape == 0)
-            size = 4;
-          if (current.shape == 1)
-            size = 2;
-          if (current.shape > 1)
-            size = 3;
-          if (current.x + size < COLS)
+          if (can_move_right(&current, cells))
             current.x++;
           break;
         case SDLK_LEFT:
-          if (current.x - 1 >= 0)
+          if (can_move_left(&current, cells))
             current.x--;
           break;
         case SDLK_DOWN:
           if (can_move_down(&current, cells))
             current.y++;
           break;
+        case SDLK_SPACE:
+          if (!is_pressed_space)
+          {
+            rotate_piece(&current, cells);
+          }
+          break;
         }
       }
       break;
+      case SDL_EVENT_KEY_UP:
+      {
+        switch (event.key.key)
+        {
+        case SDLK_SPACE:
+          if (is_pressed_space)
+          {
+            is_pressed_space = false;
+          }
+          break;
+        default:
+          break;
+        }
+      }
       default:
         break;
       }

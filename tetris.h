@@ -28,10 +28,16 @@
 
 typedef struct
 {
+  int x, y; // offsets from pivot
+} Block;
+
+typedef struct
+{
   int x, y;     // position
   int shape;    // id: 0-6 IOTLJZS
   int rotation; // 0-3
   int color;
+  Block blocks[4]; // offsets from pivot
 } Piece;
 
 int helper(const char *letter);
