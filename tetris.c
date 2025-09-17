@@ -403,6 +403,139 @@ void rotate_piece(Piece *p, int cells[COLS][ROWS])
     p->blocks[i] = new_blocks[i];
 }
 
+// the main menu of the game
+int main_menu(SDL_Window *window, SDL_Surface *surface, int width, int height)
+{
+  SDL_Event event;
+  int choice = 0; // 1 = Play, 2 = Quit
+  int running = 1;
+  TTF_Font *font = TTF_OpenFont("PressStart2P.ttf", 20);
+  if (!font)
+  {
+    SDL_Log("Failed to load font: %s", SDL_GetError());
+    return 2;
+  }
+
+  SDL_Color white = {255, 255, 255, 255};
+  SDL_Color black = {0, 0, 0, 255};
+
+  while (running)
+  {
+    // Clear screen
+    SDL_ClearSurface(surface, 0, 0, 0, 0);
+
+    SDL_Surface *text_surface = TTF_RenderText_Blended(font, "SNAKE CLASSIC", 0, white);
+    if (text_surface)
+    {
+      SDL_Rect text_rect;
+      text_rect.x = width / 2 - text_surface->w / 2;
+      text_rect.y = height / 4 - text_surface->h / 2;
+      SDL_BlitSurface(text_surface, NULL, surface, &text_rect);
+      SDL_DestroySurface(text_surface);
+    }
+
+    // Draw simple rectangles as buttons with outlines
+    SDL_Rect outline_rect_play = {width / 2 - 110, height / 2 - 55, 220, 60};
+    SDL_Rect play_rect = {width / 2 - 100, height / 2 - 50, 200, 50};
+
+    SDL_Rect outline_rect_quit = {width / 2 - 110, height / 2 - 30 + play_rect.h, 220, 60};
+    SDL_Rect quit_rect = {width / 2 - 100, height / 2 - 25 + play_rect.h, 200, 50};
+
+    if (choice == 1)
+      SDL_FillSurfaceRect(surface, &outline_rect_play, 0xffffff);
+    SDL_FillSurfaceRect(surface, &play_rect, 0x00ff00); // green
+    if (choice == 2)
+      SDL_FillSurfaceRect(surface, &outline_rect_quit, 0xffffff);
+    SDL_FillSurfaceRect(surface, &quit_rect, 0xff0000); // red
+
+    SDL_Surface *play_text_surface = TTF_RenderText_Blended(font, "PLAY", 0, black);
+    if (play_text_surface)
+    {
+      SDL_Rect text_rect;
+      text_rect.x = width / 2 - play_text_surface->w / 2;
+      text_rect.y = height / 4 - play_text_surface->h / 2 + 200;
+      SDL_BlitSurface(play_text_surface, NULL, surface, &text_rect);
+      SDL_DestroySurface(play_text_surface);
+    }
+
+    SDL_Surface *quit_text_surface = TTF_RenderText_Blended(font, "EXIT", 0, black);
+    if (quit_text_surface)
+    {
+      SDL_Rect text_rect;
+      text_rect.x = width / 2 - quit_text_surface->w / 2;
+      text_rect.y = height / 4 - quit_text_surface->h / 2 + 275;
+      SDL_BlitSurface(quit_text_surface, NULL, surface, &text_rect);
+      SDL_DestroySurface(quit_text_surface);
+    }
+
+    SDL_UpdateWindowSurface(window);
+
+    while (SDL_PollEvent(&event))
+    {
+      if (event.type == SDL_EVENT_QUIT)
+      {
+        TTF_CloseFont(font);
+        return 2; // quit
+      }
+      if (event.type == SDL_EVENT_KEY_DOWN)
+      {
+        if (event.key.key == SDLK_UP || event.key.key == SDLK_W)
+          choice = 1; // Play selected
+        if (event.key.key == SDLK_DOWN || event.key.key == SDLK_S)
+          choice = 2; // Quit selected
+        if (event.key.key == SDLK_RETURN || event.key.key == SDLK_KP_ENTER || event.key.key == SDLK_SPACE)
+        {
+          TTF_CloseFont(font);
+          return choice; // return selection
+        }
+        if (event.key.key == SDLK_ESCAPE)
+        {
+          TTF_CloseFont(font);
+          return 2; // quit immediately
+        }
+      }
+      if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+      {
+        SDL_MouseButtonEvent mb = event.button;
+        if (mb.button == SDL_BUTTON_LEFT)
+        {
+          // button 1 box : play
+          if (mb.x >= width / 2 - 100 && mb.x <= (width / 2 - 100) + 220 && mb.y >= height / 2 - 50 && mb.y <= height / 2)
+          {
+            SDL_Log("play");
+            return 1;
+          }
+
+          // button 2 box : quit
+          if (mb.x >= width / 2 - 100 && mb.x <= (width / 2 - 100) + 220 && mb.y >= height / 2 - 25 + play_rect.h && mb.y <= height / 2 + 25 + play_rect.h)
+          {
+            SDL_Log("quit");
+            return 2; // quit
+          }
+        }
+      }
+      if (event.type == SDL_EVENT_MOUSE_MOTION)
+      {
+        int x = event.motion.x;
+        int y = event.motion.y;
+        // button 1 box : play (hover)
+        if (x >= width / 2 - 100 && x <= (width / 2 - 100) + 220 && y >= height / 2 - 50 && y <= height / 2)
+        {
+          choice = 1;
+        }
+
+        // button 2 box : quit (hover)
+        if (x >= width / 2 - 100 && x <= (width / 2 - 100) + 220 && y >= height / 2 - 25 + play_rect.h && y <= height / 2 + 25 + play_rect.h)
+        {
+          choice = 2;
+        }
+      }
+    }
+  }
+  TTF_CloseFont(font);
+  return 2; // default quit
+}
+
 int main()
 {
   SDL_Event event;
@@ -426,6 +559,14 @@ int main()
 
   GameState gamestate = {0};
   int game = 1;
+  // main menu play/quit
+  int menu_choice = main_menu(window, surface, WIDTH + LEFT_PANNEL_WIDTH, HEIGHT);
+  if (menu_choice == 2) // Quit selected
+  {
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    return 0;
+  }
   int fps = 60;
   bool is_pressed_space = false;
   bool is_pressed_up = false;
