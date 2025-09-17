@@ -285,7 +285,18 @@ void draw_piece(SDL_Surface *surface, Piece *p, int cells[COLS][ROWS])
   }
 }
 
-void tick(SDL_Surface *surface, Piece *current, int cells[COLS][ROWS], GameState *gamestate)
+void draw_next_piece(SDL_Surface *surface, Piece *p, int cells[COLS][ROWS])
+{
+  int color = p->color;
+  for (int i = 0; i < 4; i++)
+  {
+    int x = p->x + p->blocks[i].x + 12;
+    int y = p->y + p->blocks[i].y;
+    DRAW_CELL(x, y);
+  }
+}
+
+void tick(SDL_Surface *surface, Piece *current, Piece *next, int cells[COLS][ROWS], GameState *gamestate)
 {
   if (can_move_down(current, cells))
   {
@@ -295,8 +306,8 @@ void tick(SDL_Surface *surface, Piece *current, int cells[COLS][ROWS], GameState
   {
     PLACE_PIECE(current);
     check_lines(cells, gamestate);
-    *current = get_random_piece();
-    // *current = create_piece("I");
+    *current = *next;
+    *next = get_random_piece();
   }
 }
 
@@ -407,7 +418,7 @@ int main()
     return 1;
   }
 
-  SDL_Window *window = SDL_CreateWindow("Tetris Classic", WIDTH, HEIGHT, SDL_WINDOW_RESIZABLE);
+  SDL_Window *window = SDL_CreateWindow("Tetris Classic", WIDTH + LEFT_PANNEL_WIDTH, HEIGHT, SDL_WINDOW_RESIZABLE);
 
   SDL_Surface *surface = SDL_GetWindowSurface(window);
 
@@ -417,9 +428,13 @@ int main()
   int game = 1;
   int fps = 60;
   bool is_pressed_space = false;
+  bool is_pressed_up = false;
+  bool is_pressed_f = false;
+  bool is_window_maxed = false;
   int cells[COLS][ROWS] = {0};
   // Piece current = create_piece("I");
   Piece current = get_random_piece();
+  Piece next_piece = get_random_piece();
 
   Uint32 last_tick = SDL_GetTicks();
   Uint32 delay = 150;
@@ -463,6 +478,31 @@ int main()
             rotate_piece(&current, cells);
           }
           break;
+        case SDLK_UP:
+          if (!is_pressed_up)
+          {
+            rotate_piece(&current, cells);
+          }
+          break;
+        case SDLK_F:
+          if (!is_pressed_f)
+          {
+            if (!is_window_maxed)
+            {
+              SDL_MaximizeWindow(window);
+              surface = SDL_GetWindowSurface(window);
+              SDL_UpdateWindowSurface(window);
+              is_window_maxed = true;
+            }
+            else
+            {
+              SDL_RestoreWindow(window);
+              surface = SDL_GetWindowSurface(window);
+              SDL_UpdateWindowSurface(window);
+              is_window_maxed = false;
+            }
+          }
+          break;
         }
       }
       break;
@@ -474,6 +514,18 @@ int main()
           if (is_pressed_space)
           {
             is_pressed_space = false;
+          }
+          break;
+        case SDLK_UP:
+          if (is_pressed_up)
+          {
+            is_pressed_up = false;
+          }
+          break;
+        case SDLK_F:
+          if (is_pressed_f)
+          {
+            is_pressed_f = false;
           }
           break;
         default:
@@ -488,10 +540,11 @@ int main()
     if (now - last_tick > delay)
     {
       last_tick = now;
-      tick(surface, &current, cells, &gamestate);
+      tick(surface, &current, &next_piece, cells, &gamestate);
     }
 
     draw_cells(surface, cells);
+    draw_next_piece(surface, &next_piece, cells);
     draw_piece(surface, &current, cells);
     SDL_Color white = {255, 255, 255, 255};
 

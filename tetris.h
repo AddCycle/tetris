@@ -19,6 +19,8 @@
 #define HEIGHT 900
 #define CELL_SIZE 30
 
+#define LEFT_PANNEL_WIDTH (20 * CELL_SIZE)
+
 #define ROWS (HEIGHT / CELL_SIZE)
 #define COLS (WIDTH / CELL_SIZE)
 
@@ -57,7 +59,7 @@ Piece create_piece(const char *letter);
 Piece get_random_piece();
 void place_piece(SDL_Surface *surface, Piece *p, int cells[COLS][ROWS]);
 void draw_piece(SDL_Surface *surface, Piece *p, int cells[COLS][ROWS]);
-void tick(SDL_Surface *surface, Piece *current, int cells[COLS][ROWS], GameState *gamestate);
+void tick(SDL_Surface *surface, Piece *current, Piece *next_piece, int cells[COLS][ROWS], GameState *gamestate);
 void draw_cells(SDL_Surface *surface, int cells[COLS][ROWS]);
 void reset_row(int row, int cells[COLS][ROWS], GameState *gamestate);
 bool check_line(int row[COLS]);
