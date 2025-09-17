@@ -19,7 +19,7 @@
 #define HEIGHT 900
 #define CELL_SIZE 30
 
-#define LEFT_PANNEL_WIDTH (20 * CELL_SIZE)
+#define LEFT_PANNEL_WIDTH (4 * CELL_SIZE)
 
 #define ROWS (HEIGHT / CELL_SIZE)
 #define COLS (WIDTH / CELL_SIZE)
