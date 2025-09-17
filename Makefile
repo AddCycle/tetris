@@ -3,6 +3,9 @@ all: build run
 build:
 	clang *.c -o tetris.exe -I "C:/SDL3/include" -L "C:/SDL3/lib/x64" -lSDL3 -lSDL3_ttf
 
+debug:
+	clang *.c -o tetris.exe -I "C:/SDL3/include" -L "C:/SDL3/lib/x64" -lSDL3 -lSDL3_ttf -g
+
 run:
 	./tetris.exe
 

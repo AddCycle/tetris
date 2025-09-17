@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 #define RED 0xff0000
 #define BLUE 0x0000ff
@@ -25,6 +26,11 @@
 #define FILL_CELL(x, y) fill_cell(x, y, cells, color)
 #define DRAW_CELL(x, y) draw_cell(surface, x, y, cells, color)
 #define PLACE_PIECE(piece) place_piece(surface, piece, cells)
+
+typedef struct
+{
+  int score;
+} GameState;
 
 typedef struct
 {
@@ -51,8 +57,8 @@ Piece create_piece(const char *letter);
 Piece get_random_piece();
 void place_piece(SDL_Surface *surface, Piece *p, int cells[COLS][ROWS]);
 void draw_piece(SDL_Surface *surface, Piece *p, int cells[COLS][ROWS]);
-void tick(SDL_Surface *surface, Piece *current, int cells[COLS][ROWS]);
+void tick(SDL_Surface *surface, Piece *current, int cells[COLS][ROWS], GameState *gamestate);
 void draw_cells(SDL_Surface *surface, int cells[COLS][ROWS]);
-void reset_row(int row, int cells[COLS][ROWS]);
+void reset_row(int row, int cells[COLS][ROWS], GameState *gamestate);
 bool check_line(int row[COLS]);
-void check_lines(int cells[COLS][ROWS]);
+void check_lines(int cells[COLS][ROWS], GameState *gamestate);

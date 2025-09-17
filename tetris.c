@@ -1,5 +1,53 @@
 #include "tetris.h"
 
+void draw_text(SDL_Surface *target, TTF_Font *font, int x, int y, SDL_Color color, const char *fmt, ...)
+{
+  // Render to a surface
+  char buffer[256]; // posix paths max
+  va_list args;
+  va_start(args, fmt);
+  vsnprintf(buffer, sizeof(buffer), fmt, args);
+  va_end(args);
+
+  SDL_Surface *text_surf = TTF_RenderText_Blended(font, buffer, 0, color);
+  if (!text_surf)
+  {
+    printf("Rendering text: %s\n", SDL_GetError());
+    return;
+  }
+
+  SDL_Rect dest = {x, y, text_surf->w, text_surf->h};
+  SDL_BlitSurface(text_surf, NULL, target, &dest);
+
+  SDL_DestroySurface(text_surf); // cleanup temp surface
+}
+
+void write_high_score(int score)
+{
+  FILE *file = fopen("high_score.txt", "w");
+
+  fprintf(file, "%d", score);
+
+  fclose(file);
+}
+
+int read_high_score()
+{
+  FILE *file = fopen("high_score.txt", "r");
+  if (!file)
+  {
+    write_high_score(0);
+    return 0;
+  }
+  int score = 0;
+
+  fscanf(file, "%d", &score);
+
+  fclose(file);
+
+  return score;
+}
+
 const char *inv_helper(int id)
 {
   switch (id)
@@ -237,7 +285,7 @@ void draw_piece(SDL_Surface *surface, Piece *p, int cells[COLS][ROWS])
   }
 }
 
-void tick(SDL_Surface *surface, Piece *current, int cells[COLS][ROWS])
+void tick(SDL_Surface *surface, Piece *current, int cells[COLS][ROWS], GameState *gamestate)
 {
   if (can_move_down(current, cells))
   {
@@ -246,7 +294,7 @@ void tick(SDL_Surface *surface, Piece *current, int cells[COLS][ROWS])
   else
   {
     PLACE_PIECE(current);
-    check_lines(cells);
+    check_lines(cells, gamestate);
     *current = get_random_piece();
     // *current = create_piece("I");
   }
@@ -268,7 +316,7 @@ void draw_cells(SDL_Surface *surface, int cells[COLS][ROWS])
   }
 }
 
-void reset_row(int row, int cells[COLS][ROWS])
+void reset_row(int row, int cells[COLS][ROWS], GameState *gamestate)
 {
   for (int y = row; y > 0; y--)
   {
@@ -280,6 +328,9 @@ void reset_row(int row, int cells[COLS][ROWS])
   // clear finally the top row
   for (int x = 0; x < COLS; x++)
     cells[x][0] = 0;
+
+  gamestate->score++; // incrementing the score
+  printf("Score: %d\n", gamestate->score);
 }
 
 bool check_line(int row[COLS])
@@ -292,7 +343,7 @@ bool check_line(int row[COLS])
   return true;
 }
 
-void check_lines(int cells[COLS][ROWS])
+void check_lines(int cells[COLS][ROWS], GameState *gamestate)
 {
   for (int i = 0; i < ROWS; i++)
   {
@@ -303,7 +354,7 @@ void check_lines(int cells[COLS][ROWS])
     }
     if (check_line(row))
     {
-      reset_row(i, cells);
+      reset_row(i, cells, gamestate);
     }
   }
 }
@@ -350,10 +401,19 @@ int main()
     return 1;
   }
 
+  if (!TTF_Init())
+  {
+    puts("failed to init text rendering");
+    return 1;
+  }
+
   SDL_Window *window = SDL_CreateWindow("Tetris Classic", WIDTH, HEIGHT, SDL_WINDOW_RESIZABLE);
 
   SDL_Surface *surface = SDL_GetWindowSurface(window);
 
+  TTF_Font *font = TTF_OpenFont("PressStart2P.ttf", 20);
+
+  GameState gamestate = {0};
   int game = 1;
   int fps = 60;
   bool is_pressed_space = false;
@@ -364,6 +424,7 @@ int main()
   Uint32 last_tick = SDL_GetTicks();
   Uint32 delay = 150;
 
+  int score = 0;
   while (game)
   {
     Uint32 now = SDL_GetTicks();
@@ -427,16 +488,28 @@ int main()
     if (now - last_tick > delay)
     {
       last_tick = now;
-      tick(surface, &current, cells);
+      tick(surface, &current, cells, &gamestate);
     }
 
     draw_cells(surface, cells);
     draw_piece(surface, &current, cells);
+    SDL_Color white = {255, 255, 255, 255};
 
     DRAW_GRID;
 
+    draw_text(surface, font, WIDTH / 4, HEIGHT / 4 - 50, white, "Score : %d", gamestate.score);
+    draw_text(surface, font, WIDTH / 4, HEIGHT / 4, white, "Highscore : %d", read_high_score());
+
     SDL_UpdateWindowSurface(window);
   }
+
+  if (gamestate.score > read_high_score())
+  {
+    write_high_score(gamestate.score);
+  }
+
+  TTF_CloseFont(font);
+  TTF_Quit();
 
   SDL_Quit();
   return 0;
